@@ -41,9 +41,7 @@ def main():
         valueInputOption='USER_ENTERED', body=body).execute()
 
     # Response from gSheets
-    print('{0} cells appended.'.format(result \
-                                       .get('updates') \
-                                       .get('updatedCells')))
+    # print('{0} cells appended.'.format(result.get('updates').get('updatedCells')))
 
 
 if __name__ == '__main__':

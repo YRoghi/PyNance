@@ -9,7 +9,7 @@ from google.oauth2.credentials import Credentials
 
 class MissingSpreadsheetID(IOError):
     """
-    Missing spreadsheetid1.json file
+    Missing spreadsheetid.json file
     """
 
 

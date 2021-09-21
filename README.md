@@ -1,4 +1,4 @@
-#PyNance
+# PyNance
 
 A Python Finance  tracking app. Parses payslip data through to a companion Google Sheet.
 
@@ -19,3 +19,4 @@ Blank Spreadsheet template can be found [here](https://www.google.com).
 - [ ] Automate saving of payslips from Gmail to gDrive
 - [ ] Pull payslips from gDrive instead of local directory
 - [ ] Write up full documentation/install guide
+- [ ] Create blank spreadsheet template
