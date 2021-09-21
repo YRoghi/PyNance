@@ -19,7 +19,6 @@ def main():
     for path in paths:
         # Grabs all PDFs from current directory
         if path[-4:].lower() == '.pdf':
-            print(path)
             payslips.append(Payslip(os.path.join(dirpath, path)))
 
     # ------------------------------- GOOGLE SHEETS -------------------------------
