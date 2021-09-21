@@ -10,12 +10,7 @@ from google.oauth2.credentials import Credentials
 class MissingSpreadsheetID(IOError):
     """
     Missing spreadsheetid1.json file
-
-    Attributes:
-        message -- explanation of the error
     """
-    def __init__(self):
-        self.message = 'spreadsheetid.json is not present.'
 
 
 class Payslip:
@@ -103,12 +98,12 @@ class SheetHandler:
     def __init__(self):
 
         # Obfuscating spreadsheet ID
-        if os.path.exists('spreadsheetid1.json'):
-            f = open('spreadsheetid1.json')
+        if os.path.exists('spreadsheetid.json'):
+            f = open('spreadsheetid.json')
             data = json.load(f)
             self.SPREADSHEET_ID = data['id']
         else:
-            pass
+            raise MissingSpreadsheetID('spreadsheetid.json is missing!')
 
         creds = None
         # The file token.json stores the user's access and refresh tokens, and is
@@ -131,4 +126,3 @@ class SheetHandler:
         if not self.service:
             self.service = build('sheets', 'v4', credentials=creds)
             self.sheet = self.service.spreadsheets()
-
