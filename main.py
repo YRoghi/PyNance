@@ -3,10 +3,15 @@
 
 """
 import os
-from toolkit import Payslip, SheetHandler
+from toolkit import Payslip, SheetHandler, MailHandler
+
 
 def main():
     """Directs flow of the script"""
+
+    # ------------------------------- GMAIL HANDLER -------------------------------
+    MailHandler()
+
     # ------------------------------- PAYSLIP PARSING -------------------------------
     # Changing current working directory
     relative_path = os.path.dirname(__file__)
@@ -25,7 +30,6 @@ def main():
 
     # Values to be appended to gSheet
     values = list()
-
 
     for payslip in payslips:
         data = payslip.getData()
