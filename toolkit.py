@@ -139,7 +139,6 @@ class MailHandler:
     Handles interactions with the Gmail API
     """
 
-    SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
     service = None
     messages = None
 
@@ -201,7 +200,6 @@ class SheetHandler:
     """
 
     # If scope changes delete token.json
-    SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
     SPREADSHEET_ID = None
     service = None
     sheet = None
