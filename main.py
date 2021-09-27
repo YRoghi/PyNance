@@ -1,6 +1,5 @@
 """
 @author Yann ROGHI
-
 """
 import os
 from toolkit import Payslip, SheetHandler, MailHandler

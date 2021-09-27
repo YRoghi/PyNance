@@ -78,7 +78,6 @@ class Payslip:
         """Returns NCB attribute"""
         return self.accommodation
 
-
 class SheetHandler:
     """
     Handles all interactions with the Google Sheets API
@@ -100,10 +99,12 @@ class SheetHandler:
         else:
             raise IOError('redacted.json is missing!')
 
+        # ---------------- !! REDUNDANT !! ----------------
+        # TODO: Fix up this code block. The creation/checking of token.json is redundant
+        # Need to fix up scopes to be collated between MailHandler and SheetHandler
+
         creds = None
-        # The file token.json stores the user's access and refresh tokens, and is
-        # created automatically when the authorization flow completes for the first
-        # time.
+
         if os.path.exists('token.json'):
             creds = Credentials.from_authorized_user_file('token.json', self.SCOPES)
         # If there are no (valid) credentials available, let the user log in.
@@ -117,6 +118,7 @@ class SheetHandler:
             # Save the credentials for the next run
             with open('token.json', 'w') as token:
                 token.write(creds.to_json())
+        # ---------------- !! REDUNDANT !! ----------------
 
         if not self.service:
             self.service = build('sheets', 'v4', credentials=creds)
@@ -128,8 +130,9 @@ class MailHandler:
     """
 
     SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
+    service = None
 
-    def __init__(self):
+    def __init__(self, service):
         creds = None
         # The file token.json stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
@@ -148,7 +151,7 @@ class MailHandler:
             with open('token.json', 'w') as token:
                 token.write(creds.to_json())
 
-        service = build('gmail', 'v1', credentials=creds)
+        self.service = build('gmail', 'v1', credentials=creds)
 
         # Obfuscating filter
         if os.path.exists('redacted.json'):
@@ -159,7 +162,7 @@ class MailHandler:
             raise IOError('redacted.json is missing!')
 
         # Call the Gmail API
-        results = service.users().messages().list(userId='me', q=flt).execute()
+        results = self.service.users().messages().list(userId='me', q=flt).execute()
         messages = results.get('messages', [])
 
         if not messages:
