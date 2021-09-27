@@ -78,61 +78,20 @@ class Payslip:
         """Returns NCB attribute"""
         return self.accommodation
 
-class SheetHandler:
-    """
-    Handles all interactions with the Google Sheets API
-    """
 
-    # If scope changes delete token.json
-    SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
-    SPREADSHEET_ID = None
-    service = None
-    sheet = None
+class GoogleHandler:
+
+    SCOPES = [
+        'https://www.googleapis.com/auth/gmail.readonly',
+        'https://www.googleapis.com/auth/spreadsheets',
+    ]
+    mailService = None
+    sheetService = None
 
     def __init__(self):
 
-        # Obfuscating spreadsheet ID
-        if os.path.exists('redacted.json'):
-            f = open('redacted.json')
-            data = json.load(f)
-            self.SPREADSHEET_ID = data['id']
-        else:
-            raise IOError('redacted.json is missing!')
+        # Most of this is taken from the Quickstart.py scripts provided by the Google API Docs
 
-        # ---------------- !! REDUNDANT !! ----------------
-        # TODO: Fix up this code block. The creation/checking of token.json is redundant
-        # Need to fix up scopes to be collated between MailHandler and SheetHandler
-
-        creds = None
-
-        if os.path.exists('token.json'):
-            creds = Credentials.from_authorized_user_file('token.json', self.SCOPES)
-        # If there are no (valid) credentials available, let the user log in.
-        if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
-            else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    'credentials.json', self.SCOPES)
-                creds = flow.run_local_server(port=0)
-            # Save the credentials for the next run
-            with open('token.json', 'w') as token:
-                token.write(creds.to_json())
-        # ---------------- !! REDUNDANT !! ----------------
-
-        if not self.service:
-            self.service = build('sheets', 'v4', credentials=creds)
-            self.sheet = self.service.spreadsheets()
-
-class MailHandler:
-    """
-    Handles interactions with the Gmail API
-    """
-
-    SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
-    service = None
-
-    def __init__(self, service):
         creds = None
         # The file token.json stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
@@ -151,8 +110,46 @@ class MailHandler:
             with open('token.json', 'w') as token:
                 token.write(creds.to_json())
 
-        self.service = build('gmail', 'v1', credentials=creds)
+        self.mailService = build('gmail', 'v1', credentials=creds)
+        self.sheetService = build('sheets', 'v4', credentials=creds)
 
+    def getMailService(self):
+        """
+        Returns mail service.
+        """
+
+        if self.mailService:
+            return self.mailService
+        else:
+            raise ValueError("Missing Gmail Service from Google.")
+
+    def getSheetService(self):
+        """
+        Returns sheet service.
+        """
+
+        if self.sheetService:
+            return self.sheetService
+        else:
+            raise ValueError("Missing Sheet service from Google.")
+
+
+class MailHandler:
+    """
+    Handles interactions with the Gmail API
+    """
+
+    SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
+    service = None
+    messages = None
+
+    def __init__(self, service):
+        self.service = service
+
+    def getMails(self):
+        """
+        Gets mails based on a search filter
+        """
         # Obfuscating filter
         if os.path.exists('redacted.json'):
             f = open('redacted.json')
@@ -163,26 +160,57 @@ class MailHandler:
 
         # Call the Gmail API
         results = self.service.users().messages().list(userId='me', q=flt).execute()
-        messages = results.get('messages', [])
+        self.messages = results.get('messages', [])
 
-        if not messages:
-            print('No labels found.')
+        if not self.messages:
+            raise RuntimeWarning('No messages found.')
+
+        return 0
+
+    def downloadAttachments(self):
+        """
+        Downloads all attachments based
+        """
+        for message in self.messages:
+            txt = self.service.users().messages().get(userId='me', id=message['id'], format='full').execute()
+            attachmentName = txt['payload']['parts'][1]['filename']
+            attachmentId = txt['payload']['parts'][1]['body']['attachmentId']
+            mailAttachment = self.service.users().messages().attachments().get(
+                id=attachmentId,
+                messageId=message['id'],
+                userId='me'
+            ).execute()
+            data = bytes(mailAttachment['data'], 'utf-8')
+            decoded = base64.urlsafe_b64decode(data)
+            if decoded[0:4] != b'%PDF':
+                raise ValueError('Missing the PDF file signature')
+            f = open("payslips/" + attachmentName, 'wb')
+            f.write(decoded)
+            f.close()
+
+        return 0
+
+
+class SheetHandler:
+    """
+    Handles all interactions with the Google Sheets API
+    """
+
+    # If scope changes delete token.json
+    SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+    SPREADSHEET_ID = None
+    service = None
+    sheet = None
+
+    def __init__(self, service):
+
+        # Obfuscating spreadsheet ID
+        if os.path.exists('redacted.json'):
+            f = open('redacted.json')
+            data = json.load(f)
+            self.SPREADSHEET_ID = data['id']
         else:
-            print('Messages:')
-            for message in messages:
-                txt = service.users().messages().get(userId='me', id=message['id'], format='full').execute()
-                attachmentName = txt['payload']['parts'][1]['filename']
-                attachmentId = txt['payload']['parts'][1]['body']['attachmentId']
-                mailAttachment = service.users().messages().attachments().get(
-                    id=attachmentId,
-                    messageId=message['id'],
-                    userId='me'
-                ).execute()
-                data = bytes(mailAttachment['data'], 'utf-8')
-                decoded = base64.urlsafe_b64decode(data)
-                if decoded[0:4] != b'%PDF':
-                    raise ValueError('Missing the PDF file signature')
-                f = open("payslips/" + attachmentName, 'wb')
-                f.write(decoded)
-                f.close()
-                print("Downloaded", attachmentName)
+            raise IOError('redacted.json is missing!')
+
+        self.service = service
+        self.sheet = self.service.spreadsheets()

@@ -1,15 +1,25 @@
 """
 @author Yann ROGHI
 """
+
 import os
-from toolkit import Payslip, SheetHandler, MailHandler
+from toolkit import Payslip, GoogleHandler, SheetHandler, MailHandler
 
 
 def main():
     """Directs flow of the script"""
 
+    googleApi = GoogleHandler()
+
+    # Checks for "payslips" local directory
+    dir = "payslips"
+    if not os.path.exists(dir):
+        os.mkdir(dir)
+
     # ------------------------------- GMAIL HANDLER -------------------------------
-    MailHandler()
+    gMail = MailHandler(googleApi.getMailService())
+    gMail.getMails()
+    gMail.downloadAttachments()
 
     # ------------------------------- PAYSLIP PARSING -------------------------------
     # Changing current working directory
@@ -38,13 +48,10 @@ def main():
     }
 
     # Appending to gSheet
-    gSheet = SheetHandler()
+    gSheet = SheetHandler(googleApi.getSheetService())
     result = gSheet.service.spreadsheets().values().append(
         spreadsheetId=gSheet.SPREADSHEET_ID, range='A1',
         valueInputOption='USER_ENTERED', body=body).execute()
-
-    # Response from gSheets
-    # print('{0} cells appended.'.format(result.get('updates').get('updatedCells')))
 
 
 if __name__ == '__main__':
