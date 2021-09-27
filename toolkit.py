@@ -174,6 +174,10 @@ class MailHandler:
         for message in self.messages:
             txt = self.service.users().messages().get(userId='me', id=message['id'], format='full').execute()
             attachmentName = txt['payload']['parts'][1]['filename']
+
+            if os.path.exists("payslips/" + attachmentName):
+                pass
+
             attachmentId = txt['payload']['parts'][1]['body']['attachmentId']
             mailAttachment = self.service.users().messages().attachments().get(
                 id=attachmentId,

@@ -16,23 +16,26 @@ def main():
     if not os.path.exists(dir):
         os.mkdir(dir)
 
+    # Changing current working directory
+    relative_path = os.path.dirname(__file__)
+    os.chdir(relative_path)
+    # Pathing shenanigans from earlier versions
+    dirpath = os.path.join(relative_path, 'payslips')
+    existing_paths = os.listdir(dirpath)
+
     # ------------------------------- GMAIL HANDLER -------------------------------
     gMail = MailHandler(googleApi.getMailService())
     gMail.getMails()
     gMail.downloadAttachments()
 
     # ------------------------------- PAYSLIP PARSING -------------------------------
-    # Changing current working directory
-    relative_path = os.path.dirname(__file__)
-    os.chdir(relative_path)
-    # Pathing shenanigans from earlier versions
     dirpath = os.path.join(relative_path, 'payslips')
     paths = os.listdir(dirpath)
     payslips = list()
 
     for path in paths:
         # Grabs all PDFs from current directory
-        if path[-4:].lower() == '.pdf':
+        if path[-4:].lower() == '.pdf' and path not in existing_paths:
             payslips.append(Payslip(os.path.join(dirpath, path)))
 
     # ------------------------------- GOOGLE SHEETS -------------------------------
